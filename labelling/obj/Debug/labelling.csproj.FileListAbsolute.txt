@@ -1,13 +1,12 @@
-E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.csproj.ResolveComReference.cache
-E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.Labelling.resources
-E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.Properties.Resources.resources
-E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.csproj.GenerateResource.Cache
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\labelling.exe.config
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\labelling.exe
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\labelling.pdb
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\Json.dll
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\Newtonsoft.Json.Net20.dll
 E:\workspace\stylist\LabellingTool\labelling\labelling\bin\Debug\Json.pdb
+E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.csproj.ResolveComReference.cache
+E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.Labelling.resources
+E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.Properties.Resources.resources
+E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.csproj.GenerateResource.Cache
 E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.exe
 E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.pdb
-E:\workspace\stylist\LabellingTool\labelling\labelling\obj\Debug\labelling.csprojResolveAssemblyReference.cache

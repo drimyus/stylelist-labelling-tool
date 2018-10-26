@@ -62,6 +62,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="ItemUtils.cs" />
+    <Compile Include="LabelInfo.cs" />
     <Compile Include="Labelling.cs">
       <SubType>Form</SubType>
     </Compile>
