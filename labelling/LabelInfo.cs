@@ -53,7 +53,6 @@ namespace labelling
                     category_keywords.Add(tmp_list);
                 }                
             }
-
         }
 
         private void init_attribute_info()
@@ -69,6 +68,7 @@ namespace labelling
                     ATTRIBUTE_LABELS.Add(line);
                 }
             }
+            ATTRIBUTE_LABELS.Sort();
 
         }
 

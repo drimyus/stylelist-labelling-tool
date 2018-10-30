@@ -17,7 +17,7 @@ namespace labelling
          *         Name, SourcLink, ImageLink, DropboxLink, ImagePath, Category, Description, Price, Designer, Attribute1, attribute2, ... 
          *         
         */
-        
+        static string CMBBOX_ALL = " ALL";
         static string EMPTY_VAL = "";
         
         public string id_info { get; set; }         // id of the item
@@ -32,15 +32,15 @@ namespace labelling
         public string designer_info { get; set; }
         public List<string> attributes{ get; set; }
 
-        public List<string> designers_list = new List<string>() { "ALL" };
+        public List<string> designers_list = new List<string>() { CMBBOX_ALL };
 
         public ItemInfo(List<string> attribute_lables)
         {
-            clear_properties();
-            attributes = new List<string>();
-            for (var i = 0; i < attribute_lables.Count; i++){  // ignore the first "ALL" attribute
-                attributes.Add("False");
+            attributes = new List<string>();                        
+            for (var i = 0; i < attribute_lables.Count; i++){  // ignore the first "..." attribute
+                attributes.Add(EMPTY_VAL);
             }
+            clear_properties();
         }
 
         private void clear_properties()
@@ -55,6 +55,8 @@ namespace labelling
             description_info = EMPTY_VAL;
             price_info = EMPTY_VAL;
             designer_info = EMPTY_VAL;
+            for (int i = 0; i < attributes.Count; i++)
+                attributes[i] = EMPTY_VAL;
         }
 
 
@@ -95,7 +97,7 @@ namespace labelling
 
         public void init(List<string> row, List<int> title_order)
         {
-            if (row.Count  > title_order.Count)
+            if (row.Count  > attributes.Count)
             {
                 int i = 0;
                 while (i < row.Count)
@@ -110,7 +112,7 @@ namespace labelling
 
                 clear_properties();
 
-                while (i < row.Count)
+                while (i < title_order.Count)
                 {
                     set_info_field(title_id: title_order[i], row_id: i, row: row);
                     i++;
@@ -118,34 +120,22 @@ namespace labelling
             }
 
             // convert image url to image path
-            if (img_path_info == EMPTY_VAL)
-            {
-                if (img_url_info == "")
-                    System.Console.Write(row);
-                img_path_info = convert_url_to_path(img_url_info);
-                
-            }
+//             if (img_path_info == EMPTY_VAL)
+//             {
+//                 if (dropbox_url_info != "")
+//                     img_path_info = convert_dropbox_url_to_path(dropbox_url_info);
+//                 else if (img_url_info == "")
+//                     img_path_info = convert_img_url_to_path(img_url_info);
+//                 else
+//                     System.Console.Write(row);
+//             }
 
         }
 
 
-        private string convert_url_to_path(string url)
-        {
-            if (url != EMPTY_VAL)
-            {
-                int start = url.LastIndexOf('/');
-                int end = url.IndexOf(".jpg");
-                if (start == -1) start = 0;
-                if (end == -1)
-                    end = url.Length;
-    
-                return String.Format("{0}.jpg", url.Substring(start + 1, end - start - 1));
-            }
-                
-            else
-                return EMPTY_VAL;
-        }
-        
+        private string convert_img_url_to_path(string url){ return EMPTY_VAL; }
+        private string convert_dropbox_url_to_path(string url){ return EMPTY_VAL;}
+
         public List<string> get_designer_labels()
         {
             designers_list.Sort();
@@ -155,17 +145,19 @@ namespace labelling
 
         public bool check_item(string category, string designer, string attribute)
         {
-            return check_category(category) && check_designer(designer) && check_designer(attribute);
+            return check_category(category) && check_designer(designer) && check_attribute(attribute);
         }
 
         public bool check_category(string category){
-            return (category_info == category) || (category == "ALL");        }
+            return (category_info == category) || (category == CMBBOX_ALL);        }
 
         public bool check_designer(string designer){
-            return (designer_info == designer) || (designer == "ALL");        }
+            return (designer_info == designer) || (designer == CMBBOX_ALL);        }
 
-        public bool check_attribute(string attribute){
-            return (attributes.Contains(attribute)) || (attribute == "ALL");        }
+        public bool check_attribute(string attribute)
+        {
+            return ((attributes.Contains(attribute)) || (attribute == CMBBOX_ALL));
+        }
 
         public List<string> get_raw_info()
         {

@@ -13,10 +13,13 @@ namespace labelling
 {
     public partial class Labelling : Form
     {
+        static string CMBBOX_ALL = " ALL";
+        static string EMPTY_VAL = "";
+
         LabelInfo label_info = new LabelInfo();
 
 
-        static List<int> SHOW_BUF_LEN = new List<int>() { 5, 10, 20, 50, 100, 200 };
+        static List<int> SHOW_BUF_LEN = new List<int>() { 10, 20, 50, 100, 200 };
         static string INFO_FILE = "info.csv";
         static string IMG_DIR = "images";
         static string EMPTY_IMG_PATH = "no_exist_image.jpg";
@@ -26,6 +29,7 @@ namespace labelling
         List<List<string>> itemInfoList = new List<List<string>>();
         List<int> filteredItemIndexList = new List<int>();
         ImageList imageList = new ImageList();
+        List<string> imageNames = new List<string>();
         int startPosToShow, endPosToShow;
         int lenToShow;
         ItemInfo curInfo, buf_info;
@@ -41,13 +45,13 @@ namespace labelling
             InitializeComponent();
 
             // initialize the CATEGORY combobox 
-            cmbBoxCategory.Items.Add("ALL");
+            cmbBoxCategory.Items.Add(CMBBOX_ALL);
             foreach (string category_label in label_info.get_category_labels())
                 cmbBoxCategory.Items.Add(category_label);
             cmbBoxCategory.SelectedIndex = 0;
 
             // attribute checked listbox
-            cmbBoxAttribute.Items.Add("ALL");
+            cmbBoxAttribute.Items.Add(CMBBOX_ALL);
             foreach (string attribute in label_info.get_attribute_labels()){
                 cmbBoxAttribute.Items.Add(attribute);
                 chkListBoxAttribute.Items.Add(attribute, false);
@@ -55,7 +59,7 @@ namespace labelling
             cmbBoxAttribute.SelectedIndex = 0;
 
             // designer comboBox
-            cmbBoxDesigner.Items.Add("ALL");
+            cmbBoxDesigner.Items.Add(CMBBOX_ALL);
             cmbBoxDesigner.SelectedIndex = 0;
 
             // initialize the Show_buffer_len combobox 
@@ -69,7 +73,7 @@ namespace labelling
             // list view
             listView.View = View.LargeIcon;
             listView.LargeImageList = imageList;
-            imageList.ImageSize = new Size(144, 200);
+            imageList.ImageSize = new Size(110, 150);
             imageList.ColorDepth = ColorDepth.Depth24Bit;
 
             
@@ -112,7 +116,7 @@ namespace labelling
                     }
                     else
                     {
-                        get_item_list(info_fpath: cur_fpath);
+                        get_item_list(info_fpath: cur_fpath, img_dir: image_dir);
                     }
 
                 }
@@ -170,8 +174,12 @@ namespace labelling
             endPosToShow = Math.Min(lenToShow, filteredItemIndexList.Count);
         }
 
-        private void get_item_list(string info_fpath)
+        private void get_item_list(string info_fpath, string img_dir)
         {
+            List<string> img_fnames = new List<string>(Directory.GetFiles(img_dir).Select(Path.GetFileName).ToArray());
+            int i = 0;
+            string base_name;
+
             // Read data from CSV file
             using (CsvFileReader reader = new CsvFileReader(info_fpath))
             {
@@ -194,13 +202,31 @@ namespace labelling
                     {
                         buf_info.init(row: row, title_order: titleOrder);
 
-                        buf_info.category_info = label_info.guess_category(buf_info.description_info);
+                        if (! cmbBoxDesigner.Items.Contains(buf_info.designer_info)){
+                            cmbBoxDesigner.Items.Add(buf_info.designer_info);
+                        }
 
+                        if ((buf_info.category_info == EMPTY_VAL) && (buf_info.description_info != EMPTY_VAL))
+                            buf_info.category_info = label_info.guess_category(buf_info.description_info);
+
+                        if (buf_info.img_path_info == ""){
+                            i = -1;
+                            while (i++ < img_fnames.Count - 1){
+                                base_name = img_fnames[i].Split('.')[0];
+                                if (buf_info.img_url_info.Contains(base_name) || buf_info.dropbox_url_info.Contains(base_name))
+                                {
+                                    buf_info.img_path_info = img_fnames[i];
+                                    img_fnames.RemoveAt(i);
+                                    break;
+                                }
+                            }
+                            
+                        }
                         itemInfoList.Add(buf_info.get_raw_info());
-                    }
 
-                }
-            }
+                    } // b_is_firstline
+                } // while (reader.readRow)
+            } // using (CsvFileReade
         }
 
         private void save_item_list(string info_fpath)
@@ -245,17 +271,20 @@ namespace labelling
         }
 
         private void chkListBoxAttribute_SelectedIndexChanged(object sender, EventArgs e){
-            if (listView.SelectedItems.Count == 0)
-                return;
-            else
-                Update_Attributes();
+//             if (listView.SelectedItems.Count == 0)
+//                 return;
+//             else
+//                 Update_Attributes();
         }
                 
         public void Show_Attributes_State(ItemInfo info)
         {
+            txtBoxCategory.Text = info.category_info;
+            txtBoxDesigner.Text = info.designer_info;
+
             for (int i = 0; i < info.attributes.Count; i++)
             {
-                if (info.attributes[i] == "TRUE")
+                if (info.attributes[i] != EMPTY_VAL)
                     chkListBoxAttribute.SetItemChecked(i, true);
                 else
                     chkListBoxAttribute.SetItemChecked(i, false);
@@ -269,10 +298,13 @@ namespace labelling
             for(int i = 0; i < chkListBoxAttribute.Items.Count; i++)
             {
                 if (chkListBoxAttribute.GetItemChecked(i))
-                    buf_info.attributes[i] = "TRUE";
+                    buf_info.attributes[i] = chkListBoxAttribute.Items[i].ToString();
                 else
-                    buf_info.attributes[i] = "FALSE";
+                    buf_info.attributes[i] = EMPTY_VAL;
             }
+
+            buf_info.category_info = txtBoxCategory.Text;
+            buf_info.designer_info = txtBoxDesigner.Text;
 
             List<string> str_infos = buf_info.get_raw_info();
             for (int i = 0; i < str_infos.Count; i++)
@@ -318,11 +350,72 @@ namespace labelling
         }
 
         public void Show_selected_item(){
-            int idx = startPosToShow + listView.Items.IndexOf(listView.SelectedItems[0]);
-            buf_info.init(itemInfoList[filteredItemIndexList[idx]], title_order: titleOrder);
-            Show_Image(info: buf_info);
-            Show_Info(info: buf_info);
-            Show_Attributes_State(info: buf_info);
+            if (listView.SelectedItems.Count != 0)
+            {
+                int idx = startPosToShow + listView.Items.IndexOf(listView.SelectedItems[0]);
+                buf_info.init(itemInfoList[filteredItemIndexList[idx]], title_order: titleOrder);
+                Show_Image(info: buf_info);
+                Show_Info(info: buf_info);
+                Show_Attributes_State(info: buf_info);
+            }
+            else if (listView.Items.Count != 0)
+            {
+                listView.Items[0].Selected = true;
+                int idx = startPosToShow;
+                buf_info.init(itemInfoList[filteredItemIndexList[idx]], title_order: titleOrder);
+                Show_Image(info: buf_info);
+                Show_Info(info: buf_info);
+                Show_Attributes_State(info: buf_info);
+            }
+            else
+            {
+                Clear_selected_Item();
+            }
+
+        }
+
+        private void txtBoxCategory_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtBoxDesigner_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            if (! cmbBoxCategory.Items.Contains(txtBoxCategory.Text))
+            {
+                if (MessageBox.Show("Not registered Category?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)                {
+                    cmbBoxCategory.Items.Add(txtBoxCategory.Text);
+                }
+                else{
+                    txtBoxCategory.Text = "";
+                    return;
+                }
+
+
+            }
+            else if (!cmbBoxDesigner.Items.Contains(txtBoxDesigner.Text))
+            {
+                if (MessageBox.Show("Not registered Designer?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)                {
+                    cmbBoxDesigner.Items.Add(txtBoxDesigner.Text);
+                }
+                else{
+                    txtBoxDesigner.Text = "";
+                    return;
+                }                
+            }
+            
+            Update_Attributes();
+
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            Show_selected_item();
         }
 
         public void Show_Info(ItemInfo info)
@@ -331,23 +424,25 @@ namespace labelling
             str_info += String.Format("Name: {0}\r\n", info.name_info);
             str_info += String.Format("Source link: {0}\r\n", info.source_url_info);
             str_info += String.Format("Image url: {0}\r\n", info.img_url_info);
-            str_info += String.Format("Filename: {0}\\{1}\r\n", IMG_DIR, info.img_path_info);
-            str_info += String.Format("Category: {0}\r\n", info.category_info);
+            str_info += String.Format("DropBox url: {0}\r\n", info.dropbox_url_info);
+            str_info += String.Format("Filename: {0}//{1}\r\n", IMG_DIR, info.img_path_info);            
             str_info += String.Format("Price: {0}\r\n", info.price_info);
-            str_info += String.Format("Description: {0}\r\n", info.description_info);
-            str_info += String.Format("Designer: {0}\r\n", info.designer_info);
+            str_info += String.Format("Description: {0}\r\n", info.description_info);            
             txtBoxInfo.Text = str_info;
         }
 
-       
 
         public void Show_Filtered_Items()
         {
             imageList.Images.Clear();
+            imageNames.Clear();
             listView.Clear();
 
             if (filteredItemIndexList.Count == 0)
+            {
+                Clear_selected_Item();
                 return;
+            }
 
             endPosToShow = Math.Min(Math.Max(endPosToShow, 0), filteredItemIndexList.Count);
             for (int i = startPosToShow; i < endPosToShow; i++)
@@ -361,14 +456,18 @@ namespace labelling
                 else{
                     imageList.Images.Add(noExistImg);
                 }
+                imageNames.Add(buf_info.img_path_info);
             }
 
             for (int i = 0; i < imageList.Images.Count; i++)
             {
                 ListViewItem item = new ListViewItem();
+                item.Text = imageNames[i];
                 item.ImageIndex = i;
                 listView.Items.Add(item);
             }
+
+            Show_selected_item();
         }
 
 
